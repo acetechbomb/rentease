@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RentEase – House Rental Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1f2436;
+    --border: #2a2f45;
+    --accent: #f4a228;
+    --accent2: #e05a2b;
+    --green: #27c47a;
+    --red: #e05a5a;
+    --blue: #4a90d9;
+    --text: #e8eaf0;
+    --muted: #6b7394;
+    --radius: 12px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--text); }
+  .header-actions { display: flex; gap: 10px; }
+
+  /* NAVIGATION */
+  nav {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  nav button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 14px 18px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  nav button.active, nav button:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* MAIN */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 20px;
+  }
+
+  /* PANELS */
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  /* DASHBOARD */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .stat-card.orange::before { background: var(--accent); }
+  .stat-card.green::before { background: var(--green); }
+  .stat-card.red::before { background: var(--red); }
+  .stat-card.blue::before { background: var(--blue); }
+  .stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 700; }
+  .stat-card.orange .stat-value { color: var(--accent); }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.red .stat-value { color: var(--red); }
+  .stat-card.blue .stat-value { color: var(--blue); }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title .badge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 2px 10px;
+  }
+
+  /* TABLES */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface2); }
+  th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  td { padding: 13px 16px; border-top: 1px solid var(--border); font-size: 14px; vertical-align: middle; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .empty-row td { text-align: center; color: var(--muted); padding: 40px; font-style: italic; }
+
+  /* STATUS BADGES */
+  .badge-status {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-occupied { background: rgba(39,196,122,0.12); color: var(--green); }
+  .badge-vacant { background: rgba(74,144,217,0.12); color: var(--blue); }
+  .badge-maintenance { background: rgba(224,90,43,0.12); color: var(--accent2); }
+  .badge-paid { background: rgba(39,196,122,0.12); color: var(--green); }
+  .badge-pending { background: rgba(244,162,40,0.12); color: var(--accent); }
+  .badge-overdue { background: rgba(224,90,90,0.12); color: var(--red); }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #ffb340; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: rgba(224,90,90,0.15); color: var(--red); border: 1px solid rgba(224,90,90,0.3); }
+  .btn-danger:hover { background: rgba(224,90,90,0.25); }
+  .btn-success { background: rgba(39,196,122,0.15); color: var(--green); border: 1px solid rgba(39,196,122,0.3); }
+  .btn-success:hover { background: rgba(39,196,122,0.25); }
+  .btn-sm { padding: 5px 12px; font-size: 13px; }
+  .btn-icon { padding: 7px; border-radius: 7px; }
+
+  /* FORMS / MODALS */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: popIn 0.2s ease;
+  }
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .modal-header {
+    padding: 22px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
+  .modal-body { padding: 22px 24px; }
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+  }
+
+  .form-group { margin-bottom: 18px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 500; }
+  input, select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* TOOLBAR */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    flex: 1;
+    max-width: 320px;
+  }
+  .search-box svg { color: var(--muted); flex-shrink: 0; }
+  .search-box input {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 14px;
+  }
+
+  /* BACKUP SECTION */
+  .backup-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 18px;
+  }
+  .backup-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .backup-desc { font-size: 14px; color: var(--muted); margin-bottom: 18px; line-height: 1.6; }
+  .backup-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  /* ALERT */
+  .alert {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    z-index: 999;
+    animation: slideUp 0.3s ease;
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .alert.success { border-left: 3px solid var(--green); }
+  .alert.error { border-left: 3px solid var(--red); }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* RECENT LIST */
+  .recent-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .recent-item:last-child { border-bottom: none; }
+  .recent-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+  }
+  .recent-info { flex: 1; }
+  .recent-name { font-weight: 500; font-size: 14px; }
+  .recent-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 700px) {
+    .two-col { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 400px) {
+    .stats-grid { grid-template-columns: 1fr; }
+  }
+
+  .color-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .amount { font-family: 'Syne', sans-serif; font-weight: 600; }
+</style>
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<header>
+  <div class="logo">Rent<span>Ease</span>
+<div style="font-size:12px;color:var(--muted);margin-left:10px">v1.1.0 · Updated 2026-04-22</div>
+
+</div>
+  <div class="header-actions">
+    <button class="btn btn-secondary btn-sm" onclick="showPanel('backup')">💾 Backup</button>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showPanel('dashboard', this)">📊 Dashboard</button>
+  <button onclick="showPanel('properties', this)">🏠 Properties</button>
+  <button onclick="showPanel('tenants', this)">👤 Tenants</button>
+  <button onclick="showPanel('payments', this)">💰 Payments</button>
+  <button onclick="showPanel('expenses', this)">📋 Expenses</button>
+  <button onclick="showPanel('backup', this)">💾 Backup</button>
+</nav>
+
+<main>
+
+  <!-- DASHBOARD -->
+  <div id="panel-dashboard" class="panel active">
+    <div class="stats-grid">
+      <div class="stat-card orange">
+        <div class="stat-label">Total Properties</div>
+        <div class="stat-value" id="stat-properties">0</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Occupied Units</div>
+        <div class="stat-value" id="stat-occupied">0</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Vacant Units</div>
+        <div class="stat-value" id="stat-vacant">0</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Monthly Income</div>
+        <div class="stat-value" id="stat-income">0</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="section-title">Recent Payments <span class="badge" id="badge-recent-pay">0</span></div>
+        <div class="table-wrap">
+          <div style="padding: 16px 18px;" id="recent-payments-list">
+            <div style="color:var(--muted);font-style:italic;font-size:14px;">No payments yet</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">Upcoming Rent Due <span class="badge" id="badge-upcoming">0</span></div>
+        <div class="table-wrap">
+          <div style="padding: 16px 18px;" id="upcoming-rent-list">
+            <div style="color:var(--muted);font-style:italic;font-size:14px;">No active tenants</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROPERTIES -->
+  <div id="panel-properties" class="panel">
+    <div class="toolbar">
+      <div class="section-title" style="margin:0">Properties</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="search-box">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search properties..." id="search-properties" oninput="renderProperties()">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('property-modal')">＋ Add Property</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Property</th>
+            <th>Type</th>
+            <th>Rent/Mo</th>
+            <th>Status</th>
+            <th>Tenant</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="properties-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TENANTS -->
+  <div id="panel-tenants" class="panel">
+    <div class="toolbar">
+      <div class="section-title" style="margin:0">Tenants</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="search-box">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search tenants..." id="search-tenants" oninput="renderTenants()">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('tenant-modal')">＋ Add Tenant</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Property</th>
+            <th>Rent</th>
+            <th>Move-in</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tenants-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div id="panel-payments" class="panel">
+    <div class="toolbar">
+      <div class="section-title" style="margin:0">Payments</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="search-box">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search payments..." id="search-payments" oninput="renderPayments()">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('payment-modal')">＋ Record Payment</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Tenant</th>
+            <th>Property</th>
+            <th>Amount</th>
+            <th>Month</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="payments-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- EXPENSES -->
+  <div id="panel-expenses" class="panel">
+    <div class="toolbar">
+      <div class="section-title" style="margin:0">Expenses</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <div class="search-box">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" placeholder="Search expenses..." id="search-expenses" oninput="renderExpenses()">
+        </div>
+        <button class="btn btn-primary" onclick="openModal('expense-modal')">＋ Add Expense</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Property</th>
+            <th>Category</th>
+            <th>Amount</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="expenses-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BACKUP -->
+  <div id="panel-backup" class="panel">
+    <div class="section-title" style="margin-bottom:20px">💾 Data Backup & Restore</div>
+
+    <div class="backup-card">
+      <div class="backup-title">📤 Export / Save Backup</div>
+      <div class="backup-desc">Download all your data as a JSON file. Save it to your phone, Google Drive, WhatsApp, or any storage. Use this file to restore your data on any device.</div>
+      <div class="backup-actions">
+        <button class="btn btn-primary" onclick="exportData()">⬇ Download Backup File</button>
+      </div>
+    </div>
+
+    <div class="backup-card">
+      <div class="backup-title">📥 Restore from Backup</div>
+      <div class="backup-desc">Select a previously saved backup file (.json) to restore all your data. <strong style="color:var(--red)">Warning:</strong> this will replace all current data.</div>
+      <div class="backup-actions">
+        <label class="btn btn-secondary" style="cursor:pointer">
+          📂 Choose Backup File
+          <input type="file" accept=".json" style="display:none" onchange="importData(event)">
+        </label>
+      </div>
+    </div>
+
+    <div class="backup-card">
+      <div class="backup-title">🗑 Clear All Data</div>
+      <div class="backup-desc">Permanently delete all properties, tenants, payments, and expenses. Make sure to backup first.</div>
+      <div class="backup-actions">
+        <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear Everything</button>
+      </div>
+    </div>
+
+    <div class="backup-card" style="border-color:rgba(39,196,122,0.3)">
+      <div class="backup-title" style="color:var(--green)">ℹ How to use on your phone</div>
+      <div class="backup-desc">
+        1. Click <strong>Download Backup File</strong> — a file saves to your Downloads folder.<br>
+        2. Share that file to WhatsApp, Gmail, or cloud storage for safekeeping.<br>
+        3. To restore: open this page on any device → Backup tab → <strong>Choose Backup File</strong> → select the .json file.<br>
+        4. All your data will be restored instantly!
+      </div>
+    </div>
+  </div>
+
+</main>
+<div class="modal-backdrop open" id="pin-lock">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">🔐 Enter PIN</div>
+    </div>
+    <div class="modal-body">
+      <input type="password" id="pin-input" placeholder="Enter 4-digit PIN" maxlength="4" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="unlockApp()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ===== MODALS ===== -->
+
+<!-- Property Modal -->
+<div class="modal-backdrop" id="property-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="property-modal-title">Add Property</div>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="closeModal('property-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prop-id">
+      <div class="form-group">
+        <label>Property Name / Address *</label>
+        <input type="text" id="prop-name" placeholder="e.g. 12 Accra Road, Flat B">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select id="prop-type">
+            <option>Apartment</option>
+            <option>House</option>
+            <option>Room</option>
+            <option>Shop</option>
+            <option>Office</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="prop-status">
+            <option value="vacant">Vacant</option>
+            <option value="occupied">Occupied</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monthly Rent (GHS)</label>
+          <input type="number" id="prop-rent" placeholder="0.00" min="0">
+        </div>
+        <div class="form-group">
+          <label>Bedrooms</label>
+          <input type="number" id="prop-beds" placeholder="e.g. 2" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="prop-notes" placeholder="Any additional details..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('property-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProperty()">Save Property</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tenant Modal -->
+<div class="modal-backdrop" id="tenant-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="tenant-modal-title">Add Tenant</div>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="closeModal('tenant-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ten-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="ten-name" placeholder="Tenant full name">
+        </div>
+        <div class="form-group">
+          <label>Phone *</label>
+          <input type="tel" id="ten-phone" placeholder="0XX XXX XXXX">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="ten-email" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label>ID / Ghana Card</label>
+          <input type="text" id="ten-idno" placeholder="GHA-XXXXXXXXX-X">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Assigned Property</label>
+          <select id="ten-property"></select>
+        </div>
+        <div class="form-group">
+          <label>Move-in Date</label>
+          <input type="date" id="ten-movein">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Monthly Rent (GHS)</label>
+          <input type="number" id="ten-rent" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Deposit (GHS)</label>
+          <input type="number" id="ten-deposit" placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="ten-notes" placeholder="Emergency contacts, special agreements..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('tenant-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTenant()">Save Tenant</button>
+    </div>
+  </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal-backdrop" id="payment-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="payment-modal-title">Record Payment</div>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="closeModal('payment-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pay-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Tenant *</label>
+          <select id="pay-tenant" onchange="autoFillPayment()"></select>
+        </div>
+        <div class="form-group">
+          <label>Property</label>
+          <input type="text" id="pay-property" placeholder="Auto-filled" readonly style="opacity:0.6">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount (GHS) *</label>
+          <input type="number" id="pay-amount" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Payment Month</label>
+          <input type="month" id="pay-month">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date Received</label>
+          <input type="date" id="pay-date">
+        </div>
+        <div class="form-group">
+          <label>Method</label>
+          <select id="pay-method">
+            <option>Cash</option>
+            <option>Mobile Money</option>
+            <option>Bank Transfer</option>
+            <option>Cheque</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Status</label>
+          <select id="pay-status">
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Reference / Receipt No.</label>
+          <input type="text" id="pay-ref" placeholder="Optional">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="pay-notes" placeholder="Any payment notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('payment-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="savePayment()">Save Payment</button>
+    </div>
+  </div>
+</div>
+
+<!-- Expense Modal -->
+<div class="modal-backdrop" id="expense-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="expense-modal-title">Add Expense</div>
+      <button class="btn btn-secondary btn-sm btn-icon" onclick="closeModal('expense-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="exp-id">
+      <div class="form-group">
+        <label>Description *</label>
+        <input type="text" id="exp-desc" placeholder="e.g. Plumbing repair">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Property</label>
+          <select id="exp-property"></select>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="exp-category">
+            <option>Maintenance</option>
+            <option>Utilities</option>
+            <option>Insurance</option>
+            <option>Tax</option>
+            <option>Cleaning</option>
+            <option>Security</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Amount (GHS) *</label>
+          <input type="number" id="exp-amount" placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" id="exp-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="exp-notes" placeholder="Details about the expense..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('expense-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveExpense()">Save Expense</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ DATA STORE ============
+let data = {
+  properties: [],
+  tenants: [],
+  payments: [],
+  expenses: []
+};
+
+function loadData() {
+  const saved = localStorage.getItem('renteaseData');
+  if (saved) {
+    try { data = JSON.parse(saved); } catch(e) {}
+  }
+}
+
+function saveData() {
+  localStorage.setItem('renteaseData', JSON.stringify(data));
+}
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+// ============ NAVIGATION ============
+function showPanel(name, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  else {
+    const btns = document.querySelectorAll('nav button');
+    btns.forEach(b => { if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(name)) b.classList.add('active'); });
+  }
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'properties') renderProperties();
+  if (name === 'tenants') renderTenants();
+  if (name === 'payments') renderPayments();
+  if (name === 'expenses') renderExpenses();
+}
+
+// ============ MODALS ============
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ============ ALERT ============
+function showAlert(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = 'alert ' + type;
+  el.innerHTML = (type === 'success' ? '✅ ' : '❌ ') + msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// ============ PROPERTIES ============
+function openAddProperty() {
+  document.getElementById('property-modal-title').textContent = 'Add Property';
+  document.getElementById('prop-id').value = '';
+  ['prop-name','prop-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('prop-type').value = 'Apartment';
+  document.getElementById('prop-status').value = 'vacant';
+  document.getElementById('prop-rent').value = '';
+  document.getElementById('prop-beds').value = '';
+  openModal('property-modal');
+}
+
+function editProperty(id) {
+  const p = data.properties.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('property-modal-title').textContent = 'Edit Property';
+  document.getElementById('prop-id').value = p.id;
+  document.getElementById('prop-name').value = p.name;
+  document.getElementById('prop-type').value = p.type;
+  document.getElementById('prop-status').value = p.status;
+  document.getElementById('prop-rent').value = p.rent;
+  document.getElementById('prop-beds').value = p.beds;
+  document.getElementById('prop-notes').value = p.notes;
+  openModal('property-modal');
+}
+
+function saveProperty() {
+  const name = document.getElementById('prop-name').value.trim();
+  if (!name) { showAlert('Property name is required', 'error'); return; }
+  const id = document.getElementById('prop-id').value || uid();
+  const obj = {
+    id,
+    name,
+    type: document.getElementById('prop-type').value,
+    status: document.getElementById('prop-status').value,
+    rent: parseFloat(document.getElementById('prop-rent').value) || 0,
+    beds: document.getElementById('prop-beds').value,
+    notes: document.getElementById('prop-notes').value
+  };
+  const idx = data.properties.findIndex(x => x.id === id);
+  if (idx >= 0) data.properties[idx] = obj; else data.properties.push(obj);
+  saveData();
+  closeModal('property-modal');
+  renderProperties();
+  showAlert('Property saved!');
+}
+
+function deleteProperty(id) {
+  if (!confirm('Delete this property? Tenants/payments linked to it will remain but lose the property reference.')) return;
+  data.properties = data.properties.filter(x => x.id !== id);
+  saveData();
+  renderProperties();
+  showAlert('Property deleted');
+}
+
+function renderProperties() {
+  const q = (document.getElementById('search-properties')?.value || '').toLowerCase();
+  let list = data.properties.filter(p => !q || p.name.toLowerCase().includes(q) || p.type.toLowerCase().includes(q));
+  const tb = document.getElementById('properties-tbody');
+  if (!list.length) {
+    tb.innerHTML = '<tr class="empty-row"><td colspan="6">No properties found. Click "+ Add Property" to get started.</td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map(p => {
+    const tenant = data.tenants.find(t => t.propertyId === p.id);
+    const statusBadge = `<span class="badge-status badge-${p.status}">${p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span>`;
+    return `<tr>
+      <td><strong>${esc(p.name)}</strong><br><small style="color:var(--muted)">${p.beds ? p.beds+' bed · ' : ''}${p.type}</small></td>
+      <td>${p.type}</td>
+      <td class="amount">GHS ${fmt(p.rent)}</td>
+      <td>${statusBadge}</td>
+      <td>${tenant ? esc(tenant.name) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="editProperty('${p.id}')">✏ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteProperty('${p.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ TENANTS ============
+function populatePropertySelects() {
+  const opts = `<option value="">— None —</option>` + data.properties.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  ['ten-property','exp-property'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+function openAddTenant() {
+  populatePropertySelects();
+  document.getElementById('tenant-modal-title').textContent = 'Add Tenant';
+  document.getElementById('ten-id').value = '';
+  ['ten-name','ten-phone','ten-email','ten-idno','ten-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('ten-property').value = '';
+  document.getElementById('ten-movein').value = new Date().toISOString().slice(0,10);
+  document.getElementById('ten-rent').value = '';
+  document.getElementById('ten-deposit').value = '';
+  openModal('tenant-modal');
+}
+
+function editTenant(id) {
+  populatePropertySelects();
+  const t = data.tenants.find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('tenant-modal-title').textContent = 'Edit Tenant';
+  document.getElementById('ten-id').value = t.id;
+  document.getElementById('ten-name').value = t.name;
+  document.getElementById('ten-phone').value = t.phone;
+  document.getElementById('ten-email').value = t.email || '';
+  document.getElementById('ten-idno').value = t.idno || '';
+  document.getElementById('ten-property').value = t.propertyId || '';
+  document.getElementById('ten-movein').value = t.movein || '';
+  document.getElementById('ten-rent').value = t.rent || '';
+  document.getElementById('ten-deposit').value = t.deposit || '';
+  document.getElementById('ten-notes').value = t.notes || '';
+  openModal('tenant-modal');
+}
+
+function saveTenant() {
+  const name = document.getElementById('ten-name').value.trim();
+  const phone = document.getElementById('ten-phone').value.trim();
+  if (!name || !phone) { showAlert('Name and phone are required', 'error'); return; }
+  const id = document.getElementById('ten-id').value || uid();
+  const obj = {
+    id, name, phone,
+    email: document.getElementById('ten-email').value,
+    idno: document.getElementById('ten-idno').value,
+    propertyId: document.getElementById('ten-property').value,
+    movein: document.getElementById('ten-movein').value,
+    rent: parseFloat(document.getElementById('ten-rent').value) || 0,
+    deposit: parseFloat(document.getElementById('ten-deposit').value) || 0,
+    notes: document.getElementById('ten-notes').value
+  };
+  // Update property status
+  if (obj.propertyId) {
+    const prop = data.properties.find(p => p.id === obj.propertyId);
+    if (prop && prop.status !== 'occupied') { prop.status = 'occupied'; }
+  }
+  const idx = data.tenants.findIndex(x => x.id === id);
+  if (idx >= 0) data.tenants[idx] = obj; else data.tenants.push(obj);
+  saveData();
+  closeModal('tenant-modal');
+  renderTenants();
+  showAlert('Tenant saved!');
+}
+
+function deleteTenant(id) {
+  if (!confirm('Delete this tenant?')) return;
+  data.tenants = data.tenants.filter(x => x.id !== id);
+  saveData();
+  renderTenants();
+  showAlert('Tenant deleted');
+}
+
+function renderTenants() {
+  const q = (document.getElementById('search-tenants')?.value || '').toLowerCase();
+  let list = data.tenants.filter(t => !q || t.name.toLowerCase().includes(q) || t.phone.includes(q));
+  const tb = document.getElementById('tenants-tbody');
+  if (!list.length) {
+    tb.innerHTML = '<tr class="empty-row"><td colspan="6">No tenants found.</td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map(t => {
+    const prop = data.properties.find(p => p.id === t.propertyId);
+    return `<tr>
+      <td><strong>${esc(t.name)}</strong>${t.idno ? `<br><small style="color:var(--muted)">${esc(t.idno)}</small>` : ''}</td>
+      <td>${esc(t.phone)}</td>
+      <td>${prop ? esc(prop.name) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td class="amount">GHS ${fmt(t.rent)}</td>
+      <td>${t.movein || '—'}</td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="editTenant('${t.id}')">✏ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTenant('${t.id}')">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ============ PAYMENTS ============
+function openAddPayment() {
+  const opts = data.tenants.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('');
+  document.getElementById('pay-tenant').innerHTML = '<option value="">— Select Tenant —</option>' + opts;
+  document.getElementById('payment-modal-title').textContent = 'Record Payment';
+  document.getElementById('pay-id').value = '';
+  document.getElementById('pay-property').value = '';
+  document.getElementById('pay-amount').value = '';
+  document.getElementById('pay-month').value = new Date().toISOString().slice(0,7);
+  document.getElementById('pay-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('pay-method').value = 'Cash';
+  document.getElementById('pay-status').value = 'paid';
+  document.getElementById('pay-ref').value = '';
+  document.getElementById('pay-notes').value = '';
+  openModal('payment-modal');
+}
+
+function autoFillPayment() {
+  const tenId = document.getElementById('pay-tenant').value;
+  const t = data.tenants.find(x => x.id === tenId);
+  if (t) {
+    const prop = data.properties.find(p => p.id === t.propertyId);
+    document.getElementById('pay-property').value = prop ? prop.name : '';
+    document.getElementById('pay-amount').value = t.rent || '';
+  }
+}
+
+function editPayment(id) {
+  const p = data.payments.find(x => x.id === id);
+  if (!p) return;
+  openAddPayment();
+  setTimeout(() => {
+    document.getElementById('payment-modal-title').textContent = 'Edit Payment';
+    document.getElementById('pay-id').value = p.id;
+    document.getElementById('pay-tenant').value = p.tenantId;
+    autoFillPayment();
+    document.getElementById('pay-amount').value = p.amount;
+    document.getElementById('pay-month').value = p.month;
+    document.getElementById('pay-date').value = p.date;
+    document.getElementById('pay-method').value = p.method;
+    document.getElementById('pay-status').value = p.status;
+    document.getElementById('pay-ref').value = p.ref || '';
+    document.getElementById('pay-notes').value = p.notes || '';
+  }, 50);
+}
+
+function savePayment() {
+  const tenantId = document.getElementById('pay-tenant').value;
+  const amount = parseFloat(document.getElementById('pay-amount').value);
+  if (!tenantId || !amount) { showAlert('Tenant and amount are required', 'error'); return; }
+  const id = document.getElementById('pay-id').value || uid();
+  const tenant = data.tenants.find(t => t.id === tenantId);
+  const prop = tenant ? data.properties.find(p => p.id === tenant.propertyId) : null;
+  const obj = {
+    id, tenantId,
+    tenantName: tenant ? tenant.name : '',
+    propertyName: prop ? prop.name : document.getElementById('pay-property').value,
+    amount,
+    month: document.getElementById('pay-month').value,
+    date: document.getElementById('pay-date').value,
+    method: document.getElementById('pay-method').value,
+    status: document.getElementById('pay-status').value,
+    ref: document.getElementById('pay-ref').value,
+    notes: document.getElementById('pay-notes').value
+  };
+  const idx = data.payments.findIndex(x => x.id === id);
+  if (idx >= 0) data.payments[idx] = obj; else data.payments.push(obj);
+  saveData();
+  closeModal('payment-modal');
+  renderPayments();
+  showAlert('Payment recorded!');
+}
+
+function deletePayment(id) {
+  if (!confirm('Delete this payment record?')) return;
+  data.payments = data.payments.filter(x => x.id !== id);
+  saveData();
+  renderPayments();
+  showAlert('Payment deleted');
+}
+
+function renderPayments() {
+  const q = (document.getElementById('search-payments')?.value || '').toLowerCase();
+  let list = [...data.payments].sort((a,b) => b.date > a.date ? 1 : -1)
+    .filter(p => !q || p.tenantName.toLowerCase().includes(q) || p.propertyName.toLowerCase().includes(q));
+  const tb = document.getElementById('payments-tbody');
+  if (!list.length) {
+    tb.innerHTML = '<tr class="empty-row"><td colspan="7">No payments recorded yet.</td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map(p => `<tr>
+    <td><strong>${esc(p.tenantName)}</strong></td>
+    <td>${esc(p.propertyName)}</td>
+    <td class="amount">GHS ${fmt(p.amount)}</td>
+    <td>${p.month || '—'}</td>
+    <td>${p.date || '—'}</td>
+    <td><span class="badge-status badge-${p.status}">${p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td>
+    <td>
+      <button class="btn btn-secondary btn-sm" onclick="editPayment('${p.id}')">✏</button>
+      <button class="btn btn-danger btn-sm" onclick="deletePayment('${p.id}')">🗑</button>
+    </td>
+  </tr>`).join('');
+}
+
+// ============ EXPENSES ============
+function openAddExpense() {
+  populatePropertySelects();
+  document.getElementById('expense-modal-title').textContent = 'Add Expense';
+  document.getElementById('exp-id').value = '';
+  document.getElementById('exp-desc').value = '';
+  document.getElementById('exp-property').value = '';
+  document.getElementById('exp-category').value = 'Maintenance';
+  document.getElementById('exp-amount').value = '';
+  document.getElementById('exp-date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('exp-notes').value = '';
+  openModal('expense-modal');
+}
+
+function editExpense(id) {
+  const e = data.expenses.find(x => x.id === id);
+  if (!e) return;
+  populatePropertySelects();
+  document.getElementById('expense-modal-title').textContent = 'Edit Expense';
+  document.getElementById('exp-id').value = e.id;
+  document.getElementById('exp-desc').value = e.desc;
+  document.getElementById('exp-property').value = e.propertyId || '';
+  document.getElementById('exp-category').value = e.category;
+  document.getElementById('exp-amount').value = e.amount;
+  document.getElementById('exp-date').value = e.date;
+  document.getElementById('exp-notes').value = e.notes || '';
+  openModal('expense-modal');
+}
+
+function saveExpense() {
+  const desc = document.getElementById('exp-desc').value.trim();
+  const amount = parseFloat(document.getElementById('exp-amount').value);
+  if (!desc || !amount) { showAlert('Description and amount are required', 'error'); return; }
+  const id = document.getElementById('exp-id').value || uid();
+  const propId = document.getElementById('exp-property').value;
+  const prop = data.properties.find(p => p.id === propId);
+  const obj = {
+    id, desc,
+    propertyId: propId,
+    propertyName: prop ? prop.name : '—',
+    category: document.getElementById('exp-category').value,
+    amount,
+    date: document.getElementById('exp-date').value,
+    notes: document.getElementById('exp-notes').value
+  };
+  const idx = data.expenses.findIndex(x => x.id === id);
+  if (idx >= 0) data.expenses[idx] = obj; else data.expenses.push(obj);
+  saveData();
+  closeModal('expense-modal');
+  renderExpenses();
+  showAlert('Expense saved!');
+}
+
+function deleteExpense(id) {
+  if (!confirm('Delete this expense?')) return;
+  data.expenses = data.expenses.filter(x => x.id !== id);
+  saveData();
+  renderExpenses();
+  showAlert('Expense deleted');
+}
+
+function renderExpenses() {
+  const q = (document.getElementById('search-expenses')?.value || '').toLowerCase();
+  let list = [...data.expenses].sort((a,b) => b.date > a.date ? 1 : -1)
+    .filter(e => !q || e.desc.toLowerCase().includes(q) || e.propertyName.toLowerCase().includes(q) || e.category.toLowerCase().includes(q));
+  const tb = document.getElementById('expenses-tbody');
+  if (!list.length) {
+    tb.innerHTML = '<tr class="empty-row"><td colspan="6">No expenses recorded yet.</td></tr>';
+    return;
+  }
+  tb.innerHTML = list.map(e => `<tr>
+    <td><strong>${esc(e.desc)}</strong></td>
+    <td>${esc(e.propertyName)}</td>
+    <td><span class="badge-status badge-pending">${esc(e.category)}</span></td>
+    <td class="amount" style="color:var(--red)">GHS ${fmt(e.amount)}</td>
+    <td>${e.date || '—'}</td>
+    <td>
+      <button class="btn btn-secondary btn-sm" onclick="editExpense('${e.id}')">✏</button>
+      <button class="btn btn-danger btn-sm" onclick="deleteExpense('${e.id}')">🗑</button>
+    </td>
+  </tr>`).join('');
+}
+
+// ============ DASHBOARD ============
+function renderDashboard() {
+  const total = data.properties.length;
+  const occupied = data.properties.filter(p => p.status === 'occupied').length;
+  const vacant = data.properties.filter(p => p.status === 'vacant').length;
+  const income = data.payments.filter(p => p.status === 'paid').reduce((s, p) => {
+    const now = new Date(); const pm = p.month || '';
+    const isCurrent = pm.startsWith(`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`);
+    return isCurrent ? s + p.amount : s;
+  }, 0);
+
+  document.getElementById('stat-properties').textContent = total;
+  document.getElementById('stat-occupied').textContent = occupied;
+  document.getElementById('stat-vacant').textContent = vacant;
+  document.getElementById('stat-income').textContent = 'GHS ' + fmt(income);
+
+  // Recent payments
+  const recentPays = [...data.payments].sort((a,b) => b.date > a.date ? 1 : -1).slice(0, 5);
+  const rpEl = document.getElementById('recent-payments-list');
+  document.getElementById('badge-recent-pay').textContent = recentPays.length;
+  if (!recentPays.length) {
+    rpEl.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:14px;">No payments yet</div>';
+  } else {
+    rpEl.innerHTML = recentPays.map(p => `
+      <div class="recent-item">
+        <div class="recent-icon" style="background:rgba(39,196,122,0.1)">💰</div>
+        <div class="recent-info">
+          <div class="recent-name">${esc(p.tenantName)}</div>
+          <div class="recent-sub">${esc(p.propertyName)} · ${p.date}</div>
+        </div>
+        <span class="amount" style="color:var(--green)">GHS ${fmt(p.amount)}</span>
+      </div>`).join('');
+  }
+
+  // Upcoming rent (tenants without paid payment this month)
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const dueList = data.tenants.filter(t => {
+    const paid = data.payments.some(p => p.tenantId === t.id && p.month === thisMonth && p.status === 'paid');
+    return !paid && t.propertyId;
+  });
+  document.getElementById('badge-upcoming').textContent = dueList.length;
+  const upEl = document.getElementById('upcoming-rent-list');
+  if (!dueList.length) {
+    upEl.innerHTML = '<div style="color:var(--muted);font-style:italic;font-size:14px;">All rents paid for this month 🎉</div>';
+  } else {
+    upEl.innerHTML = dueList.slice(0,5).map(t => {
+      const prop = data.properties.find(p => p.id === t.propertyId);
+      return `<div class="recent-item">
+        <div class="recent-icon" style="background:rgba(244,162,40,0.1)">🏠</div>
+        <div class="recent-info">
+          <div class="recent-name">${esc(t.name)}</div>
+          <div class="recent-sub">${prop ? esc(prop.name) : '—'}</div>
+        </div>
+        <span class="amount" style="color:var(--accent)">GHS ${fmt(t.rent)}</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+// ============ BACKUP ============
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const d = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `rentease-backup-${d}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showAlert('Backup file downloaded!');
+}
+
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      const parsed = JSON.parse(ev.target.result);
+      if (!parsed.properties || !parsed.tenants) throw new Error('Invalid file');
+      if (!confirm('This will replace ALL current data with the backup. Continue?')) return;
+      data = parsed;
+      saveData();
+      renderDashboard();
+      showAlert('Data restored from backup!');
+    } catch(err) {
+      showAlert('Invalid backup file', 'error');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('Are you SURE you want to delete all data? This cannot be undone!')) return;
+  data = { properties: [], tenants: [], payments: [], expenses: [] };
+  saveData();
+  renderDashboard();
+  showAlert('All data cleared');
+}
+
+// ============ BUTTON OVERRIDES ============
+// Patch onclick in Add buttons to use correct functions
+document.querySelector('[onclick="openModal(\'property-modal\')"]').setAttribute('onclick', 'openAddProperty()');
+document.querySelector('[onclick="openModal(\'tenant-modal\')"]').setAttribute('onclick', 'openAddTenant()');
+document.querySelector('[onclick="openModal(\'payment-modal\')"]').setAttribute('onclick', 'openAddPayment()');
+document.querySelector('[onclick="openModal(\'expense-modal\')"]').setAttribute('onclick', 'openAddExpense()');
+
+// ============ HELPERS ============
+function esc(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmt(n) {
+  return Number(n || 0).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+// ============ INIT ============
+loadData();
+renderDashboard();
+</script>
+
+<script>
+// ===== APP VERSION =====
+console.log('v1.1.0 loaded');
+
+// ===== PIN LOCK =====
+const savedPin = localStorage.getItem('rentease_pin');
+if (!savedPin) {
+  localStorage.setItem('rentease_pin', '1234'); // default PIN
+}
+
+function unlockApp() {
+  const input = document.getElementById('pin-input').value;
+  if (input === localStorage.getItem('rentease_pin')) {
+    document.getElementById('pin-lock').classList.remove('open');
+  } else alert('Wrong PIN');
+}
+
+// ===== PWA =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+
+</body>
+</html>

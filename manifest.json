@@ -1,0 +1,9 @@
+{
+  "name": "RentEase",
+  "short_name": "RentEase",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#f4a228",
+  "icons": []
+}
