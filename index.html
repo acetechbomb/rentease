@@ -710,7 +710,9 @@
   html.portal-mode body > header,
   html.portal-mode body > nav,
   html.portal-mode body > main,
-  html.portal-mode #pin-lock { display: none !important; }
+  html.portal-mode #pin-lock,
+  html.portal-mode #alert-container { display: none !important; }
+  html.portal-mode #tenant-portal { display: block !important; }
 </style>
 </head>
 <body>
@@ -1997,7 +1999,7 @@ if (params.get('mode') === 'portal') {
 </div>
 
 <!-- TENANT PORTAL (Accessible without PIN) -->
-<div id="tenant-portal" style="display: none; position: fixed; inset: 0; background: var(--bg); z-index: 300; overflow-y: auto;">
+<div id="tenant-portal" style="display: none; position: fixed; inset: 0; background: var(--bg); z-index: 300; overflow-y: auto;" class="tenant-portal-wrap">
   <header style="background: linear-gradient(135deg, var(--surface) 0%, var(--surface-light) 100%); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 70px;">
     <div class="logo">
       <span class="logo-icon">🏠</span>
