@@ -46,6 +46,8 @@
     console.warn("Firebase not configured yet.");
   } else {
     window._fbConfigured = true;
+    // Tell the rest of the app Firebase is ready
+    window.dispatchEvent(new Event('fb-ready'));
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
 
@@ -75,7 +77,14 @@
       const q = query(collection(db, "submissions"), orderBy("timestamp", "desc"));
       onSnapshot(q, snap => {
         window._fbSubmissions = snap.docs.map(d => ({ fbId: d.id, ...d.data() }));
+        // Firebase is confirmed working — hide banner
+        window._fbConfigured = true;
+        const banner = document.getElementById('firebase-banner');
+        if (banner) banner.style.display = 'none';
+        const notice = document.getElementById('fb-live-notice');
+        if (notice) notice.style.display = 'block';
         if (typeof renderSubmissions === 'function') renderSubmissions();
+        if (typeof renderDashboard === 'function') renderDashboard();
       });
     });
   }
@@ -839,6 +848,11 @@ function renderDashboard(){
   }).join(''):'<div style="color:var(--text-muted);font-style:italic;font-size:14px;">All rents paid this month 🎉</div>';
 
   document.getElementById('firebase-banner').style.display=window._fbConfigured?'none':'block';
+  // Also hide banner when Firebase module finishes loading
+  window.addEventListener('fb-ready',()=>{
+    document.getElementById('firebase-banner').style.display='none';
+    document.getElementById('fb-live-notice').style.display='block';
+  });
 }
 
 // ── PORTAL ─────────────────────────────────────────────────────────────────
