@@ -237,7 +237,7 @@
 <body>
 
 <!-- PIN LOCK -->
-<div id="pin-lock" class="open">
+<div id="pin-lock">
   <div class="pin-container">
     <div class="pin-title">🏠 RentEase</div>
     <div class="pin-subtitle">Enter your PIN to access</div>
@@ -252,6 +252,7 @@
   <div class="header-actions">
     <button class="btn btn-secondary btn-icon" onclick="exportData()" title="Download backup">📥</button>
     <button class="btn btn-secondary btn-icon" onclick="openModal('settings-modal')" title="Settings">⚙️</button>
+    <button class="btn btn-secondary btn-icon" onclick="lockApp()" title="Lock app">🔒</button>
   </div>
 </header>
 
@@ -960,10 +961,20 @@ function clearAllData(){
   data={properties:[],tenants:[],payments:[],expenses:[]};
   saveData(); renderUI(); showAlert('All data cleared');
 }
+function lockApp(){
+  sessionStorage.removeItem('rentease_unlocked');
+  document.getElementById('pin-lock').classList.remove('open');
+  document.getElementById('pin-input').focus();
+}
 if(!localStorage.getItem('rentease_pin')) localStorage.setItem('rentease_pin','1234');
+// Auto-unlock if already logged in this session
+if(sessionStorage.getItem('rentease_unlocked')==='true'){
+  document.getElementById('pin-lock').classList.add('open');
+}
 function unlockApp(){
   if(document.getElementById('pin-input').value===localStorage.getItem('rentease_pin')){
     document.getElementById('pin-lock').classList.add('open');
+    sessionStorage.setItem('rentease_unlocked','true');
     document.getElementById('pin-input').value='';
   } else {
     showAlert('Incorrect PIN','error');
